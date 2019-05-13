@@ -50,6 +50,8 @@ int mbedtls_ecdh_gen_public( mbedtls_ecp_group *grp, mbedtls_mpi *d, mbedtls_ecp
     optiga_ecc_curve_t curve_id;
     optiga_key_id_t optiga_key_id = OPTIGA_KEY_STORE_ID_E0F3;
 
+    printf("++++++++++++++++++++++++++mbedtls_ecdh_gen_public++++++++++++++++++++++++++\n\r");
+
     //checking group against the supported curves of Optiga Trust X
     if ( ( grp->id != MBEDTLS_ECP_DP_SECP256R1 ) &&
 		 ( grp->id != MBEDTLS_ECP_DP_SECP384R1 ) )
@@ -95,6 +97,8 @@ int mbedtls_ecdh_compute_shared( mbedtls_ecp_group *grp, mbedtls_mpi *z,
     uint8_t public_key_out[100];
     size_t public_key_length;
     uint8_t buf[100];
+
+    printf("++++++++++++++++++++++++++mbedtls_ecdh_compute_shared++++++++++++++++++++++++++\n\r");
 
     //Step1: Prepare the public key material as expected by security chip
     //checking gid against the supported curves of OPTIGA Trust X

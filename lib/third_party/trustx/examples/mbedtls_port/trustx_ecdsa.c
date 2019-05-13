@@ -51,6 +51,8 @@ int mbedtls_ecdsa_sign( mbedtls_ecp_group *grp, mbedtls_mpi *r, mbedtls_mpi *s,
     unsigned char *p = der_signature;
     const unsigned char *end = der_signature + dslen;
 
+    printf("++++++++++++++++++++++++++mbedtls_ecdsa_sign++++++++++++++++++++++++++\n\r");
+
     if(optiga_crypt_ecdsa_sign((unsigned char *)buf, blen, OPTIGA_KEY_STORE_ID_E0F1, der_signature, &dslen) != OPTIGA_LIB_SUCCESS)
     {
 		ret = MBEDTLS_ERR_PK_BAD_INPUT_DATA;
@@ -80,6 +82,8 @@ int mbedtls_ecdsa_verify( mbedtls_ecp_group *grp,
 	size_t public_key_len = 0;
 	uint8_t truncated_hash_length;
 	
+	printf("++++++++++++++++++++++++++mbedtls_ecdsa_verify++++++++++++++++++++++++++\n\r");
+
 	signature_len = mbedtls_asn1_write_mpi( &p, signature, s );
     signature_len+= mbedtls_asn1_write_mpi( &p, signature, r );
 	
