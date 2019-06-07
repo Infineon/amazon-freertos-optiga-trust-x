@@ -77,6 +77,9 @@
 #include "aws_demo_config.h"
 #include "aws_hello_world.h"
 
+#include "dps310.h"
+#include "i2c_master.h"
+
 /**
  * @brief MQTT client ID.
  *
@@ -112,6 +115,88 @@
  * @brief A block time of 0 simply means "don't block".
  */
 #define echoDONT_BLOCK           ( ( TickType_t ) 0 )
+
+#define DPS310_SLAVE_ADDRESS (0x77 << 1)
+#include "i2c_mux.h"
+
+static s16 dps310_read_byte(uint8_t reg_addr)
+{
+	uint8_t data = 0;
+
+    if (i2c_mux_acquire() != 0)
+	{
+	  return -1;
+	}
+
+    I2C_MASTER_Transmit(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
+	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
+
+	I2C_MASTER_Receive(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &data, 1, true, true);
+	//while (I2C_MASTER_IsRxBusy(&I2C_MASTER_0));
+
+    i2c_mux_release();
+
+    return data;
+}
+
+/* Should return -1 or negative value in case of failure otherwise length of
+* read contents in read_buffer
+* and shall place read contents in read_buffer
+*/
+static s16 dps310_read_block(uint8_t reg_addr, uint8_t length, uint8_t *read_buffer)
+{
+	if (length == 0)
+        return -1;
+
+    if (i2c_mux_acquire() != 0)
+	{
+	  return -1;
+	}
+
+    I2C_MASTER_Transmit(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
+	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
+
+    I2C_MASTER_Receive(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, read_buffer, length, true, true);
+	//while (I2C_MASTER_IsRxBusy(&I2C_MASTER_0));
+
+    i2c_mux_release();
+
+    return length;
+}
+
+/* Should return -1 in case of failure otherwise non negative number*/
+static s16 dps310_write_byte(uint8_t reg_addr, uint8_t data)
+{
+    if (i2c_mux_acquire() != 0)
+	{
+	  return -1;
+	}
+
+    I2C_MASTER_Transmit(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
+	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
+    I2C_MASTER_Transmit(&i2c_master_0, false, DPS310_SLAVE_ADDRESS, &data, 1, true);
+	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
+
+    i2c_mux_release();
+
+    return 1;
+}
+
+/* Shall implement delay in milliseconds*/
+static void dps310_wait_ms(u8 delay)
+{
+    vTaskDelay( pdMS_TO_TICKS(delay) );
+}
+
+struct dps310_state dps310_0;
+
+dps310_bus_connection dps310_0_bus_connection =
+{
+  .read_byte = dps310_read_byte,
+  .read_block = dps310_read_block,
+  .write_byte = dps310_write_byte,
+  .delayms = dps310_wait_ms
+};
 
 /*-----------------------------------------------------------*/
 
@@ -156,13 +241,6 @@ static void prvPublishNextMessage( BaseType_t xMessageNumber );
  */
 static MQTTBool_t prvMQTTCallback( void * pvUserData,
                                    const MQTTPublishData_t * const pxCallbackParams );
-
-/**
- * @brief Subscribes to the echoTOPIC_NAME topic.
- *
- * @return pdPASS if subscribe operation is successful, pdFALSE otherwise.
- */
-static BaseType_t prvSubscribe( void );
 
 /*-----------------------------------------------------------*/
 
@@ -279,7 +357,53 @@ static void prvPublishNextMessage( BaseType_t xMessageNumber )
 }
 /*-----------------------------------------------------------*/
 
+static void prvSensorReaderTask( void * pvParameters )
+{
+    char cDataBuffer[ 80 ];
+    MQTTAgentPublishParams_t *pxParameters;
+    pxParameters = ( MQTTAgentPublishParams_t * ) pvParameters;
 
+    uint32_t tick = 0;
+
+    double temp;
+    double press;
+
+    // Initialize DPS310
+    dps310_init(&dps310_0, &dps310_0_bus_connection);
+    dps310_standby(&dps310_0);
+    dps310_config(&dps310_0, OSR_8, TMP_MR_2, OSR_128, PM_MR_128, dps310_0.tmp_ext);
+    dps310_resume(&dps310_0);
+
+
+    while (1) {
+        vTaskDelay( pdMS_TO_TICKS( 2000 ) );
+
+        if ( xMQTTHandle == NULL ) continue;
+
+        dps310_get_processed_data(&dps310_0, &press, &temp);
+
+        configPRINTF(("pressure: %f, temperature: %f\r\n", press, temp));
+        snprintf(cDataBuffer, sizeof( cDataBuffer), "{\"pressure\": %0.2f, \"temperature\": %0.2f}", press, temp);
+
+        MQTTAgentPublishParams_t pxPublishParams;
+        pxPublishParams.pucTopic = echoTOPIC_NAME;
+        pxPublishParams.usTopicLength = ( uint16_t )  strlen(( const char * )pxPublishParams.pucTopic);
+        pxPublishParams.pvData = cDataBuffer;
+        pxPublishParams.ulDataLength = ( uint32_t )  strlen(( const char * )cDataBuffer);
+        pxPublishParams.xQoS =  eMQTTQoS1;
+        if ( MQTT_AGENT_Publish(xMQTTHandle, &( pxPublishParams ),
+                                 democonfigMQTT_TIMEOUT) == eMQTTAgentSuccess )
+        {
+//            DIGITAL_IO_ToggleOutput(&LED1);
+        	//configPRINTF(("Outbound sent successfully.\r\n"));
+        }
+        else
+        {
+//            DIGITAL_IO_ToggleOutput(&LED2);
+            //configPRINTF(("Outbound NOT sent successfully.\r\n"));
+        }
+    }
+}
 
 /*-----------------------------------------------------------*/
 

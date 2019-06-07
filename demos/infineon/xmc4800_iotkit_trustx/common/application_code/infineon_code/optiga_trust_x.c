@@ -114,8 +114,7 @@ void vTrustXTaskCallbackHandler( void * pvParameters )
 
 	    extern void vOptigaInitHook(void);
 
-	    if (vOptigaInitHook != NULL)
-	    	vOptigaInitHook();
+	    vOptigaInitHook();
 	}
 
 	vTaskDelete(NULL);
