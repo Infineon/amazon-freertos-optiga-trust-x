@@ -112,13 +112,16 @@ void vTrustXTaskCallbackHandler( void * pvParameters )
 
 	    vAlternateKeyProvisioning( &xParams );
 
-        DEMO_RUNNER_RunDemos();
+	    extern void vOptigaInitHook(void);
+
+	    if (vOptigaInitHook != NULL)
+	    	vOptigaInitHook();
 	}
 
 	vTaskDelete(NULL);
 }
 
-void OPTIGA_TRUST_X_Init(void)
+void vOptigaTrustXInit(void)
 {
 	/* Create the handler for the callbacks. */
 	xTaskCreate( vTrustXTaskCallbackHandler,       /* Function that implements the task. */

@@ -24,7 +24,7 @@ extern "C" {
 /**
  *
  */
-void OPTIGA_TRUST_X_Init(void);
+void vOptigaTrustXInit(void);
 
 #ifdef __cplusplus
 }

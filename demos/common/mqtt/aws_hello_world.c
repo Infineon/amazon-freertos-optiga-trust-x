@@ -94,7 +94,7 @@
  *
  * It is also used to detect if a received message has already been acknowledged.
  */
-#define echoACK_STRING           ( ( const char * ) " ACK" )
+#define echoACK_STRING           ( ( const char * ) ",\"ack\": \"True\"}" )
 
 /**
  * @brief The length of the ACK string appended to messages that are echoed back
@@ -106,7 +106,7 @@
  * @brief Dimension of the character array buffers used to hold data (strings in
  * this case) that is published to and received from the MQTT broker (in the cloud).
  */
-#define echoMAX_DATA_LENGTH      20
+#define echoMAX_DATA_LENGTH      40
 
 /**
  * @brief A block time of 0 simply means "don't block".
@@ -250,7 +250,7 @@ static void prvPublishNextMessage( BaseType_t xMessageNumber )
     /* Create the message that will be published, which is of the form "Hello World n"
      * where n is a monotonically increasing number. Note that snprintf appends
      * terminating null character to the cDataBuffer. */
-    ( void ) snprintf( cDataBuffer, echoMAX_DATA_LENGTH, "Hello World %d", ( int ) xMessageNumber );
+    ( void ) snprintf( cDataBuffer, echoMAX_DATA_LENGTH, "{\"status\": \"Hello World %d\"}", ( int ) xMessageNumber );
 
     /* Setup the publish parameters. */
     memset( &( xPublishParameters ), 0x00, sizeof( xPublishParameters ) );
@@ -279,102 +279,8 @@ static void prvPublishNextMessage( BaseType_t xMessageNumber )
 }
 /*-----------------------------------------------------------*/
 
-static void prvMessageEchoingTask( void * pvParameters )
-{
-    MQTTAgentPublishParams_t xPublishParameters;
-    MQTTAgentReturnCode_t xReturned;
-    char cDataBuffer[ echoMAX_DATA_LENGTH + echoACK_STRING_LENGTH ];
-    size_t xBytesReceived;
 
-    /* Remove compiler warnings about unused parameters. */
-    ( void ) pvParameters;
 
-    /* Check this task has not already been created. */
-    configASSERT( xMQTTHandle != NULL );
-    configASSERT( xEchoMessageBuffer != NULL );
-
-    /* Setup the publish parameters. */
-    xPublishParameters.pucTopic = echoTOPIC_NAME;
-    xPublishParameters.usTopicLength = ( uint16_t ) strlen( ( const char * ) echoTOPIC_NAME );
-    xPublishParameters.pvData = cDataBuffer;
-    xPublishParameters.xQoS = eMQTTQoS1;
-
-    for( ; ; )
-    {
-        /* Each message received on the message buffer has "ACK" appended to it
-         * before being published on the same topic.  Wait for the next message. */
-        memset( cDataBuffer, 0x00, sizeof( cDataBuffer ) );
-        xBytesReceived = xMessageBufferReceive( xEchoMessageBuffer,
-                                                cDataBuffer,
-                                                sizeof( cDataBuffer ),
-                                                portMAX_DELAY );
-
-        /* Ensure the ACK can be added without overflowing the buffer.
-        * Note that xBytesReceived already includes null character as
-        * it is written to the message buffer in the MQTT callback. */
-        if( xBytesReceived <= ( sizeof( cDataBuffer ) - ( size_t ) echoACK_STRING_LENGTH ) )
-        {
-            /* Append ACK to the received message. Note that
-             * strcat appends terminating null character to the
-             * cDataBuffer. */
-            strcat( cDataBuffer, echoACK_STRING );
-            xPublishParameters.ulDataLength = ( uint32_t ) strlen( cDataBuffer );
-
-            /* Publish the ACK message. */
-            xReturned = MQTT_AGENT_Publish( xMQTTHandle,
-                                            &xPublishParameters,
-                                            democonfigMQTT_TIMEOUT );
-
-            if( xReturned == eMQTTAgentSuccess )
-            {
-                configPRINTF( ( "Message returned with ACK: '%s'\r\n", cDataBuffer ) );
-            }
-            else
-            {
-                configPRINTF( ( "ERROR:  Could not return message with ACK: '%s'\r\n", cDataBuffer ) );
-            }
-        }
-        else
-        {
-            /* cDataBuffer is null terminated as the terminating null
-             * character was sent from the MQTT callback. */
-            configPRINTF( ( "ERROR:  Buffer is not big enough to return message with ACK: '%s'\r\n", cDataBuffer ) );
-        }
-    }
-}
-/*-----------------------------------------------------------*/
-
-static BaseType_t prvSubscribe( void )
-{
-    MQTTAgentReturnCode_t xReturned;
-    BaseType_t xReturn;
-    MQTTAgentSubscribeParams_t xSubscribeParams;
-
-    /* Setup subscribe parameters to subscribe to echoTOPIC_NAME topic. */
-    xSubscribeParams.pucTopic = echoTOPIC_NAME;
-    xSubscribeParams.pvPublishCallbackContext = NULL;
-    xSubscribeParams.pxPublishCallback = prvMQTTCallback;
-    xSubscribeParams.usTopicLength = ( uint16_t ) strlen( ( const char * ) echoTOPIC_NAME );
-    xSubscribeParams.xQoS = eMQTTQoS1;
-
-    /* Subscribe to the topic. */
-    xReturned = MQTT_AGENT_Subscribe( xMQTTHandle,
-                                      &xSubscribeParams,
-                                      democonfigMQTT_TIMEOUT );
-
-    if( xReturned == eMQTTAgentSuccess )
-    {
-        configPRINTF( ( "MQTT Echo demo subscribed to %s\r\n", echoTOPIC_NAME ) );
-        xReturn = pdPASS;
-    }
-    else
-    {
-        configPRINTF( ( "ERROR:  MQTT Echo demo could not subscribe to %s\r\n", echoTOPIC_NAME ) );
-        xReturn = pdFAIL;
-    }
-
-    return xReturn;
-}
 /*-----------------------------------------------------------*/
 
 static MQTTBool_t prvMQTTCallback( void * pvUserData,
@@ -447,35 +353,9 @@ static void prvMQTTConnectAndPublishTask( void * pvParameters )
     /* Create the MQTT client object and connect it to the MQTT broker. */
     xReturned = prvCreateClientAndConnectToBroker();
 
-    if( xReturned == pdPASS )
+    if( xReturned != pdPASS )
     {
-        /* Create the task that echoes data received in the callback back to the
-         * MQTT broker. */
-        xReturned = xTaskCreate( prvMessageEchoingTask,               /* The function that implements the task. */
-                                 "Echoing",                           /* Human readable name for the task. */
-                                 democonfigMQTT_ECHO_TASK_STACK_SIZE, /* Size of the stack to allocate for the task, in words not bytes! */
-                                 NULL,                                /* The task parameter is not used. */
-                                 tskIDLE_PRIORITY,                    /* Runs at the lowest priority. */
-                                 &( xEchoingTask ) );                 /* The handle is stored so the created task can be deleted again at the end of the demo. */
-
-        if( xReturned != pdPASS )
-        {
-            /* The task could not be created because there was insufficient FreeRTOS
-             * heap available to create the task's data structures and/or stack. */
-            configPRINTF( ( "MQTT echoing task could not be created - out of heap space?\r\n" ) );
-        }
-    }
-    else
-    {
-        configPRINTF( ( "MQTT echo test could not connect to broker.\r\n" ) );
-    }
-
-    if( xReturned == pdPASS )
-    {
-        configPRINTF( ( "MQTT echo test echoing task created.\r\n" ) );
-
-        /* Subscribe to the echo topic. */
-        xReturned = prvSubscribe();
+    	configPRINTF( ( "MQTT echo test could not connect to broker.\r\n" ) );
     }
 
     if( xReturned == pdPASS )

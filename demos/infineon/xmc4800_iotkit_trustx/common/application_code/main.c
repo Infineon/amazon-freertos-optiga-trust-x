@@ -44,6 +44,7 @@
 #include "aws_application_version.h"
 #include "aws_dev_mode_key_provisioning.h"
 
+
 /* Declare the firmware version structure for all to see. */
 const AppVersion32_t xAppFirmwareVersion = {
 	.u.x.ucMajor = APP_VERSION_MAJOR,
@@ -119,7 +120,7 @@ static void prvMiscInitialization( void )
 
 void vApplicationDaemonTaskStartupHook( void )
 {
-	OPTIGA_TRUST_X_Init();
+	vOptigaTrustXInit();
     
     /* Initialize the AWS Libraries system. */
     if ( SYSTEM_Init() == pdPASS )
@@ -128,6 +129,11 @@ void vApplicationDaemonTaskStartupHook( void )
 
     }
 
+}
+
+void vOptigaInitHook(void)
+{
+	DEMO_RUNNER_RunDemos();
 }
 /*-----------------------------------------------------------*/
 
