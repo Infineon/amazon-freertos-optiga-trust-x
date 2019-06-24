@@ -355,7 +355,6 @@ static void prvSensorReaderTask( void * pvParameters )
 {
     char cDataBuffer[ 150 ];
     MQTTAgentPublishParams_t pxPublishParams;
-    pxParameters = ( MQTTAgentPublishParams_t * ) pvParameters;
 
     double temp;
     double press;
