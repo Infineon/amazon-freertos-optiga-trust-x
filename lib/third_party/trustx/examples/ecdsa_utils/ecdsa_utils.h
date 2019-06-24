@@ -45,8 +45,8 @@ extern "C" {
  * @param[in,out] rs_len length of the rs buffer, contains the bytes written afterwards
  * @returns OPTIGA_LIB_SUCCESS on success, OPTIGA_LIB_ERROR else
  */
-optiga_lib_status_t asn1_to_ecdsa_rs(const uint8_t * asn1, size_t asn1_len,
-									 uint8_t * rs, size_t * rs_len);
+int32_t asn1_to_ecdsa_rs(const uint8_t * asn1, size_t asn1_len,
+						 uint8_t * rs, size_t * rs_len);
 
 /**
  * @brief Encodes the ECDSA signature components (r, s) in ASN.1 format.
@@ -59,9 +59,9 @@ optiga_lib_status_t asn1_to_ecdsa_rs(const uint8_t * asn1, size_t asn1_len,
  * @param[out]  asn_sig_len  Length of the actual data that was copied into the output buffer
  * @returns     OPTIGA_LIB_SUCCESS on success, OPTIGA_LIB_ERROR on error
  */
-optiga_lib_status_t ecdsa_rs_to_asn1(const uint8_t  *r, size_t r_len,
-									 const uint8_t  *s, size_t s_len,
-									  	   uint8_t  *asn_sig, size_t *asn_sig_len);
+int32_t ecdsa_rs_to_asn1(const uint8_t  *r, size_t r_len,
+						 const uint8_t  *s, size_t s_len,
+							   uint8_t  *asn_sig, size_t *asn_sig_len);
 
 #ifdef __cplusplus
 }

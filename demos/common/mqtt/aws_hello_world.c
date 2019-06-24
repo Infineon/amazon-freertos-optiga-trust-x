@@ -77,8 +77,9 @@
 #include "aws_demo_config.h"
 #include "aws_hello_world.h"
 
+#include "I2C_MASTER/i2c_master.h"
+#include "DIGITAL_IO/digital_io.h"
 #include "dps310.h"
-#include "i2c_master.h"
 
 /**
  * @brief MQTT client ID.
@@ -119,7 +120,7 @@
 #define DPS310_SLAVE_ADDRESS (0x77 << 1)
 #include "i2c_mux.h"
 
-static s16 dps310_read_byte(uint8_t reg_addr)
+static s16 dps310_read_byte(u8 reg_addr)
 {
 	uint8_t data = 0;
 
@@ -128,11 +129,8 @@ static s16 dps310_read_byte(uint8_t reg_addr)
 	  return -1;
 	}
 
-    I2C_MASTER_Transmit(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
-	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
-
-	I2C_MASTER_Receive(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &data, 1, true, true);
-	//while (I2C_MASTER_IsRxBusy(&I2C_MASTER_0));
+    I2C_MASTER_TransmitPolling(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
+	I2C_MASTER_ReceivePolling(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &data, 1, true, true);
 
     i2c_mux_release();
 
@@ -143,7 +141,7 @@ static s16 dps310_read_byte(uint8_t reg_addr)
 * read contents in read_buffer
 * and shall place read contents in read_buffer
 */
-static s16 dps310_read_block(uint8_t reg_addr, uint8_t length, uint8_t *read_buffer)
+static s16 dps310_read_block(u8 reg_addr, u8 length, u8 *read_buffer)
 {
 	if (length == 0)
         return -1;
@@ -153,11 +151,8 @@ static s16 dps310_read_block(uint8_t reg_addr, uint8_t length, uint8_t *read_buf
 	  return -1;
 	}
 
-    I2C_MASTER_Transmit(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
-	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
-
-    I2C_MASTER_Receive(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, read_buffer, length, true, true);
-	//while (I2C_MASTER_IsRxBusy(&I2C_MASTER_0));
+    I2C_MASTER_TransmitPolling(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
+	I2C_MASTER_ReceivePolling(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, read_buffer, length, true, true);
 
     i2c_mux_release();
 
@@ -165,17 +160,15 @@ static s16 dps310_read_block(uint8_t reg_addr, uint8_t length, uint8_t *read_buf
 }
 
 /* Should return -1 in case of failure otherwise non negative number*/
-static s16 dps310_write_byte(uint8_t reg_addr, uint8_t data)
+static s16 dps310_write_byte(u8 reg_addr, u8 data)
 {
     if (i2c_mux_acquire() != 0)
 	{
 	  return -1;
 	}
 
-    I2C_MASTER_Transmit(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
-	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
-    I2C_MASTER_Transmit(&i2c_master_0, false, DPS310_SLAVE_ADDRESS, &data, 1, true);
-	//while (I2C_MASTER_IsTxBusy(&I2C_MASTER_0));
+    I2C_MASTER_TransmitPolling(&i2c_master_0, true, DPS310_SLAVE_ADDRESS, &reg_addr, 1, false);
+	I2C_MASTER_TransmitPolling(&i2c_master_0, false, DPS310_SLAVE_ADDRESS, &data, 1, true);
 
     i2c_mux_release();
 
@@ -307,6 +300,7 @@ static BaseType_t prvCreateClientAndConnectToBroker( void )
         else
         {
             configPRINTF( ( "MQTT echo connected.\r\n" ) );
+            DIGITAL_IO_SetOutputHigh(&LED1);
             xReturn = pdPASS;
         }
     }
@@ -359,11 +353,9 @@ static void prvPublishNextMessage( BaseType_t xMessageNumber )
 
 static void prvSensorReaderTask( void * pvParameters )
 {
-    char cDataBuffer[ 80 ];
-    MQTTAgentPublishParams_t *pxParameters;
+    char cDataBuffer[ 150 ];
+    MQTTAgentPublishParams_t pxPublishParams;
     pxParameters = ( MQTTAgentPublishParams_t * ) pvParameters;
-
-    uint32_t tick = 0;
 
     double temp;
     double press;
@@ -383,9 +375,9 @@ static void prvSensorReaderTask( void * pvParameters )
         dps310_get_processed_data(&dps310_0, &press, &temp);
 
         configPRINTF(("pressure: %f, temperature: %f\r\n", press, temp));
-        snprintf(cDataBuffer, sizeof( cDataBuffer), "{\"pressure\": %0.2f, \"temperature\": %0.2f}", press, temp);
+        snprintf(cDataBuffer, sizeof( cDataBuffer), "{\"pressure\": %6.5f, \"temperature\": %5.2f}", press, temp);
 
-        MQTTAgentPublishParams_t pxPublishParams;
+
         pxPublishParams.pucTopic = echoTOPIC_NAME;
         pxPublishParams.usTopicLength = ( uint16_t )  strlen(( const char * )pxPublishParams.pucTopic);
         pxPublishParams.pvData = cDataBuffer;
@@ -394,73 +386,22 @@ static void prvSensorReaderTask( void * pvParameters )
         if ( MQTT_AGENT_Publish(xMQTTHandle, &( pxPublishParams ),
                                  democonfigMQTT_TIMEOUT) == eMQTTAgentSuccess )
         {
-//            DIGITAL_IO_ToggleOutput(&LED1);
-        	//configPRINTF(("Outbound sent successfully.\r\n"));
+        	/*
+        	 * ToDo: Remove the commented section below, to turn on the LED by each Data delivery
+        	 */
+        	/*
+        	DIGITAL_IO_ToggleOutput(&LED2);
+        	vTaskDelay(pdMS_TO_TICKS( 100 ) );
+        	DIGITAL_IO_ToggleOutput(&LED2);
+        	*/
         }
         else
         {
-//            DIGITAL_IO_ToggleOutput(&LED2);
             //configPRINTF(("Outbound NOT sent successfully.\r\n"));
         }
     }
 }
 
-/*-----------------------------------------------------------*/
-
-static MQTTBool_t prvMQTTCallback( void * pvUserData,
-                                   const MQTTPublishData_t * const pxPublishParameters )
-{
-    char cBuffer[ echoMAX_DATA_LENGTH + echoACK_STRING_LENGTH ];
-    uint32_t ulBytesToCopy = ( echoMAX_DATA_LENGTH + echoACK_STRING_LENGTH - 1 ); /* Bytes to copy initialized to ensure it
-                                                                                   * fits in the buffer. One place is left
-                                                                                   * for NULL terminator. */
-
-    /* Remove warnings about the unused parameters. */
-    ( void ) pvUserData;
-
-    /* Don't expect the callback to be invoked for any other topics. */
-    configASSERT( ( size_t ) ( pxPublishParameters->usTopicLength ) == strlen( ( const char * ) echoTOPIC_NAME ) );
-    configASSERT( memcmp( pxPublishParameters->pucTopic, echoTOPIC_NAME, ( size_t ) ( pxPublishParameters->usTopicLength ) ) == 0 );
-
-    /* THe ulBytesToCopy has already been initialized to ensure it does not copy
-     * more bytes than will fit in the buffer.  Now check it does not copy more
-     * bytes than are available. */
-    if( pxPublishParameters->ulDataLength <= ulBytesToCopy )
-    {
-        ulBytesToCopy = pxPublishParameters->ulDataLength;
-
-        /* Set the buffer to zero and copy the data into the buffer to ensure
-         * there is a NULL terminator and the buffer can be accessed as a
-         * string. */
-        memset( cBuffer, 0x00, sizeof( cBuffer ) );
-        memcpy( cBuffer, pxPublishParameters->pvData, ( size_t ) ulBytesToCopy );
-
-        /* Only echo the message back if it has not already been echoed.  If the
-         * data has already been echoed then it will already contain the echoACK_STRING
-         * string. */
-        if( strstr( cBuffer, echoACK_STRING ) == NULL )
-        {
-            /* The string has not been echoed before, so send it to the publish
-             * task, which will then echo the data back.  Make sure to send the
-             * terminating null character as well so that the received buffer in
-             * EchoingTask can be printed as a C string.  THE DATA CANNOT BE ECHOED
-             * BACK WITHIN THE CALLBACK AS THE CALLBACK IS EXECUTING WITHINT THE
-             * CONTEXT OF THE MQTT TASK.  Calling an MQTT API function here could cause
-             * a deadlock. */
-            ( void ) xMessageBufferSend( xEchoMessageBuffer, cBuffer, ( size_t ) ulBytesToCopy + ( size_t ) 1, echoDONT_BLOCK );
-        }
-    }
-    else
-    {
-        configPRINTF( ( "[WARN]: Dropping received message as it does not fit in the buffer.\r\n" ) );
-    }
-
-    /* The data was copied into the FreeRTOS message buffer, so the buffer
-     * containing the data is no longer required.  Returning eMQTTFalse tells the
-     * MQTT agent that the ownership of the buffer containing the message lies with
-     * the agent and it is responsible for freeing the buffer. */
-    return eMQTTFalse;
-}
 /*-----------------------------------------------------------*/
 
 static void prvMQTTConnectAndPublishTask( void * pvParameters )
@@ -469,7 +410,6 @@ static void prvMQTTConnectAndPublishTask( void * pvParameters )
     BaseType_t xReturned;
     const TickType_t xFiveSeconds = pdMS_TO_TICKS( 5000UL );
     const BaseType_t xIterationsInAMinute = 60 / 5;
-    TaskHandle_t xEchoingTask = NULL;
 
     /* Avoid compiler warnings about unused parameters. */
     ( void ) pvParameters;
@@ -484,6 +424,17 @@ static void prvMQTTConnectAndPublishTask( void * pvParameters )
 
     if( xReturned == pdPASS )
     {
+        /* Create the task that publishes messages to the MQTT broker every five
+         * seconds.  This task, in turn, creates the task that echoes data received
+         * from the broker back to the broker. */
+        ( void ) xTaskCreate(
+							prvSensorReaderTask,
+							"DPSReader",
+							configMINIMAL_STACK_SIZE * 7,
+							NULL,
+							tskIDLE_PRIORITY,
+							NULL );
+
         /* MQTT client is now connected to a broker.  Publish a message
          * every five seconds until a minute has elapsed. */
         for( xX = 0; xX < xIterationsInAMinute; xX++ )
@@ -495,14 +446,6 @@ static void prvMQTTConnectAndPublishTask( void * pvParameters )
         }
     }
 
-    /* Disconnect the client. */
-    ( void ) MQTT_AGENT_Disconnect( xMQTTHandle, democonfigMQTT_TIMEOUT );
-
-    /* End the demo by deleting all created resources. */
-    configPRINTF( ( "MQTT echo demo finished.\r\n" ) );
-    configPRINTF( ( "----Demo finished----\r\n" ) );
-    vMessageBufferDelete( xEchoMessageBuffer );
-    vTaskDelete( xEchoingTask );
     vTaskDelete( NULL ); /* Delete this task. */
 }
 /*-----------------------------------------------------------*/

@@ -35,8 +35,7 @@
  * HEADER FILES
  *********************************************************************************************************************/
 #include "optiga/pal/pal_gpio.h"
-#include "xmc_gpio.h"
-#include "xmc4_gpio.h"
+#include "DIGITAL_IO/digital_io.h"
 /**********************************************************************************************************************
  * MACROS
  *********************************************************************************************************************/
@@ -44,14 +43,6 @@
 /**********************************************************************************************************************
  * LOCAL DATA
  *********************************************************************************************************************/
-typedef struct DIGITAL_IO
-{
-	uint8_t	init_flag;
-	XMC_GPIO_PORT_t *const gpio_port;             /**< port number */
-	const XMC_GPIO_CONFIG_t gpio_config;          /**< mode, initial output level and pad driver strength / hysteresis */
-	const uint8_t gpio_pin;                       /**< pin number */
-	const XMC_GPIO_HWCTRL_t hwctrl;               /**< Hardware port control */
-} DIGITAL_IO_t;
 
 /**********************************************************************************************************************
  * LOCAL ROUTINES
@@ -78,17 +69,7 @@ void pal_gpio_set_high(const pal_gpio_t* p_gpio_context)
     if ((p_gpio_context != NULL) && (p_gpio_context->p_gpio_hw != NULL))     
     {
     	p_io = (DIGITAL_IO_t *)(p_gpio_context->p_gpio_hw);
-
-    	if (p_io->init_flag == 0) {
-    		/* Initializes input / output characteristics */
-    		XMC_GPIO_Init(p_io->gpio_port, p_io->gpio_pin, &p_io->gpio_config);
-
-    		/*Configure hardware port control*/
-    		XMC_GPIO_SetHardwareControl(p_io->gpio_port, p_io->gpio_pin, p_io->hwctrl);
-    		p_io->init_flag = 1;
-    	}
-
-    	XMC_GPIO_SetOutputHigh(p_io->gpio_port, p_io->gpio_pin);
+    	DIGITAL_IO_SetOutputHigh(p_io);
     }
 }
 
@@ -108,17 +89,7 @@ void pal_gpio_set_low(const pal_gpio_t* p_gpio_context)
     if ((p_gpio_context != NULL) && (p_gpio_context->p_gpio_hw != NULL))     
     {
     	p_io = (DIGITAL_IO_t *)(p_gpio_context->p_gpio_hw);
-
-    	if (p_io->init_flag == 0) {
-    		/* Initializes input / output characteristics */
-    		XMC_GPIO_Init(p_io->gpio_port, p_io->gpio_pin, &p_io->gpio_config);
-
-    		/*Configure hardware port control*/
-    		XMC_GPIO_SetHardwareControl(p_io->gpio_port, p_io->gpio_pin, p_io->hwctrl);
-    		p_io->init_flag = 1;
-    	}
-
-    	XMC_GPIO_SetOutputLow(p_io->gpio_port, p_io->gpio_pin);
+    	DIGITAL_IO_SetOutputLow(p_io);
     }
 }
 

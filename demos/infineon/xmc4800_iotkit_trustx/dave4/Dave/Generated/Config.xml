@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Project MotherSystem_Version="" Name="aws_demos_xmc4700_relaxkit_optiga_trustx" Path="C:\Work\SVN\AmazonFreeRTOS\demos\infineon\xmc4700_relaxkit_optiga_trustx\dave4">
+    <COMPILER>
+        <Name>ARM_GCC_HOME</Name>
+        <Version/>
+        <Memory_Model/>
+    </COMPILER>
+    <DEVICE>
+        <Sales_Code>XMC4700-F144x2048</Sales_Code>
+        <Description/>
+    </DEVICE>
+    <Generated_Files>
+        <Source_Files>
+            <Source_File>
+                <File_Name>clock_xmc4.c</File_Name>
+                <Path>\Dave\Generated\CLOCK_XMC4\clock_xmc4.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>clock_xmc4_conf.c</File_Name>
+                <Path>\Dave\Generated\CLOCK_XMC4\clock_xmc4_conf.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>cpu_ctrl_xmc4.c</File_Name>
+                <Path>\Dave\Generated\CPU_CTRL_XMC4\cpu_ctrl_xmc4.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>cpu_ctrl_xmc4_conf.c</File_Name>
+                <Path>\Dave\Generated\CPU_CTRL_XMC4\cpu_ctrl_xmc4_conf.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>DAVE.c</File_Name>
+                <Path>\Dave\Generated\DAVE.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>digital_io.c</File_Name>
+                <Path>\Dave\Generated\DIGITAL_IO\digital_io.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>digital_io_conf.c</File_Name>
+                <Path>\Dave\Generated\DIGITAL_IO\digital_io_conf.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>i2c_master.c</File_Name>
+                <Path>\Dave\Generated\I2C_MASTER\i2c_master.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+            <Source_File>
+                <File_Name>i2c_master_conf.c</File_Name>
+                <Path>\Dave\Generated\I2C_MASTER\i2c_master_conf.c</Path>
+                <Type>C File</Type>
+            </Source_File>
+        </Source_Files>
+        <Header_Files>
+            <Header_File>
+                <File_Name>clock_xmc4.h</File_Name>
+                <Path>\Dave\Generated\CLOCK_XMC4\clock_xmc4.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>clock_xmc4_conf.h</File_Name>
+                <Path>\Dave\Generated\CLOCK_XMC4\clock_xmc4_conf.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>clock_xmc4_extern.h</File_Name>
+                <Path>\Dave\Generated\CLOCK_XMC4\clock_xmc4_extern.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>cpu_ctrl_xmc4.h</File_Name>
+                <Path>\Dave\Generated\CPU_CTRL_XMC4\cpu_ctrl_xmc4.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>cpu_ctrl_xmc4_conf.h</File_Name>
+                <Path>\Dave\Generated\CPU_CTRL_XMC4\cpu_ctrl_xmc4_conf.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>cpu_ctrl_xmc4_extern.h</File_Name>
+                <Path>\Dave\Generated\CPU_CTRL_XMC4\cpu_ctrl_xmc4_extern.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>DAVE.h</File_Name>
+                <Path>\Dave\Generated\DAVE.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>DAVE_Common.h</File_Name>
+                <Path>\Dave\Generated\DAVE_Common.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>digital_io.h</File_Name>
+                <Path>\Dave\Generated\DIGITAL_IO\digital_io.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>digital_io_conf.h</File_Name>
+                <Path>\Dave\Generated\DIGITAL_IO\digital_io_conf.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>digital_io_extern.h</File_Name>
+                <Path>\Dave\Generated\DIGITAL_IO\digital_io_extern.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>i2c_master.h</File_Name>
+                <Path>\Dave\Generated\I2C_MASTER\i2c_master.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>i2c_master_conf.h</File_Name>
+                <Path>\Dave\Generated\I2C_MASTER\i2c_master_conf.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+            <Header_File>
+                <File_Name>i2c_master_extern.h</File_Name>
+                <Path>\Dave\Generated\I2C_MASTER\i2c_master_extern.h</Path>
+                <Type>H File</Type>
+            </Header_File>
+        </Header_Files>
+        <Library_Files/>
+        <Assembly_Files/>
+    </Generated_Files>
+    <Include_Path>
+        <Path/>
+        <Path>\lib\third_party\XMCLib\2.1.20\CMSIS\Include</Path>
+        <Path>\lib\third_party\XMCLib\2.1.20\CMSIS\Infineon\XMC4700_series\Include</Path>
+        <Path>\lib\third_party\XMCLib\2.1.20\drivers\inc</Path>
+        <Path>\lib\aws\include</Path>
+        <Path>\lib\aws\include\private</Path>
+        <Path>\lib\aws\FreeRTOS\portable\GCC\ARM_CM4F</Path>
+        <Path>\lib\aws\FreeRTOS-Plus-TCP\include</Path>
+        <Path>\lib\aws\FreeRTOS-Plus-TCP\source\portable\Compiler\GCC</Path>
+        <Path>\application_code\common_demos\include</Path>
+        <Path>\application_code\infineon_code</Path>
+        <Path>\lib\third_party\mbedtls\include</Path>
+        <Path>\lib\third_party\pkcs11</Path>
+        <Path>\lib\third_party\jsmn</Path>
+        <Path>\config_files</Path>
+        <Path>\Dave\Generated</Path>
+        <Path>\lib\third_party\trustx\optiga\include</Path>
+        <Path>\lib\third_party\trustx\examples\ecdsa_utils</Path>
+    </Include_Path>
+    <Preprocessor_Symbols>
+        <Assembler_Symbol>XMC4700_F144x2048=</Assembler_Symbol>
+        <Compiler_Symbol>XMC4700_F144x2048=</Compiler_Symbol>
+        <Compiler_Symbol>XMC_ETH_PHY_KSZ8081RNB=</Compiler_Symbol>
+        <Compiler_Symbol>USE_CMDLIB_WITH_RTOS=</Compiler_Symbol>
+        <Compiler_Symbol>MBEDTLS_ECDSA_SIGN_ALT=</Compiler_Symbol>
+        <Compiler_Symbol>MBEDTLS_ECDSA_VERIFY_ALT=</Compiler_Symbol>
+        <Compiler_Symbol>MBEDTLS_ECDH_COMPUTE_SHARED_ALT=</Compiler_Symbol>
+        <Compiler_Symbol>MBEDTLS_ECDH_GEN_PUBLIC_ALT=</Compiler_Symbol>
+        <Compiler_Symbol>PAL_OS_HAS_EVENT_INIT=</Compiler_Symbol>
+    </Preprocessor_Symbols>
+</Project>

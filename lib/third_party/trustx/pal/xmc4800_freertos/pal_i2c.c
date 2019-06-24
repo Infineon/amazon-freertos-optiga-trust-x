@@ -33,14 +33,16 @@
 /**********************************************************************************************************************
  * HEADER FILES
  *********************************************************************************************************************/
+#include "i2c_mux.h"
 #include "optiga/pal/pal_i2c.h"
-#include "i2c_master_dave/i2c_master.h"
-#include "i2c_master_dave/i2c_master_extern.h"
-#include "i2c_master_dave/i2c_master_conf.h"
+#include "I2C_MASTER/i2c_master.h"
+#include "I2C_MASTER/i2c_master_extern.h"
+#include "I2C_MASTER/i2c_master_conf.h"
 
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "task.h"
+#include "semphr.h"
 
 /**********************************************************************************************************************
  * MACROS
@@ -51,7 +53,6 @@
  * LOCAL DATA
  *********************************************************************************************************************/
 /* Varibale to indicate the re-entrant count of the i2c bus acquire function*/
-static volatile uint32_t g_entry_count = 0;
 
 /* Pointer to the current pal i2c context*/
 static pal_i2c_t * gp_pal_i2c_current_ctx;
@@ -66,6 +67,9 @@ typedef struct i2c_result {
 	uint16_t i2c_result;
 }i2c_result_t;
 
+TaskHandle_t xIicCallbackTaskHandle = NULL;
+SemaphoreHandle_t xIicSemaphoreHandle;
+
 /**********************************************************************************************************************
  * LOCAL ROUTINES
  *********************************************************************************************************************/
@@ -73,22 +77,15 @@ typedef struct i2c_result {
 //lint --e{715} suppress the unused p_i2c_context variable lint error , since this is kept for future enhancements
 static pal_status_t pal_i2c_acquire(const void* p_i2c_context)
 {
-    if(g_entry_count == 0)
-    {
-        g_entry_count++;
-        if(g_entry_count == 1)
-        {
-            return PAL_STATUS_SUCCESS;
-        }
-    }
-    return PAL_STATUS_FAILURE;
+	if ( xSemaphoreTake(xIicSemaphoreHandle, portMAX_DELAY) == pdTRUE )
+		return PAL_STATUS_SUCCESS;
 }
 
 // I2C release bus function
 //lint --e{715} suppress the unused p_i2c_context variable lint, since this is kept for future enhancements
 static void pal_i2c_release(const void* p_i2c_context)
 {
-    g_entry_count = 0;
+	xSemaphoreGive(xIicSemaphoreHandle);
 }
 /// @endcond
 
@@ -229,21 +226,33 @@ void i2c_result_handler( void * pvParameters )
 pal_status_t pal_i2c_init(const pal_i2c_t* p_i2c_context)
 {
 	uint16_t status = PAL_STATUS_FAILURE;
-	status = I2C_MASTER_Init(&i2c_master_0);
-	if (status == 0) {
+
+	if (xIicCallbackTaskHandle == NULL)
+	{
+		xIicSemaphoreHandle = xSemaphoreCreateBinary();
+
+		status = I2C_MASTER_Init(p_i2c_context->p_i2c_hw_config);
+		if (status == 0) {
+			status = PAL_STATUS_SUCCESS;
+		}
+
+		/* Create the handler for the callbacks. */
+		xTaskCreate( i2c_result_handler,       /* Function that implements the task. */
+					"TrstI2CXHndlr",          /* Text name for the task. */
+					configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
+					NULL,    /* Parameter passed into the task. */
+					tskIDLE_PRIORITY,/* Priority at which the task is created. */
+					&xIicCallbackTaskHandle );      /* Used to pass out the created task's handle. */
+
+		/* Create a queue for results. Not more than 2 interrupts one by one are expected*/
+		trustx_i2cresult_queue = xQueueCreate( 2, sizeof( i2c_result_t ) );
+
+		pal_i2c_release(p_i2c_context);
+	}
+	else {
+		// Seems like the task has been started already
 		status = PAL_STATUS_SUCCESS;
 	}
-
-	/* Create the handler for the callbacks. */
-	xTaskCreate( i2c_result_handler,       /* Function that implements the task. */
-				"TrstI2CXHndlr",          /* Text name for the task. */
-				configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
-				NULL,    /* Parameter passed into the task. */
-				tskIDLE_PRIORITY,/* Priority at which the task is created. */
-				NULL );      /* Used to pass out the created task's handle. */
-
-	/* Create a queue for results. Not more than 2 interrupts one by one are expected*/
-	trustx_i2cresult_queue = xQueueCreate( 2, sizeof( i2c_result_t ) );
 
     return status;
 }
@@ -272,6 +281,13 @@ pal_status_t pal_i2c_init(const pal_i2c_t* p_i2c_context)
  */
 pal_status_t pal_i2c_deinit(const pal_i2c_t* p_i2c_context)
 {
+    if ( xIicCallbackTaskHandle != NULL)
+        vTaskDelete(xIicCallbackTaskHandle);
+
+    pal_i2c_acquire(p_i2c_context);
+
+    vSemaphoreDelete(xIicSemaphoreHandle);
+
     return PAL_STATUS_SUCCESS;
 }
 

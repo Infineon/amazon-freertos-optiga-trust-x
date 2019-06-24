@@ -15,6 +15,9 @@
  */
 
 #include <stdio.h>
+#include "FreeRTOSConfig.h"
+
+#if defined(configPRINT_SERIALIF)
 
 #include "console_io.h"
 
@@ -75,3 +78,4 @@ void CONSOLE_IO_Init(void)
 
   XMC_GPIO_SetMode(CONSOLE_IO_UART_TX_PIN, XMC_GPIO_MODE_OUTPUT_PUSH_PULL | CONSOLE_IO_UART_TX_PIN_AF);
 }
+#endif

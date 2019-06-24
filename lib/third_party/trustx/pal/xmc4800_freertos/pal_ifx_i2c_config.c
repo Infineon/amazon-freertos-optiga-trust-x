@@ -35,35 +35,9 @@
  *********************************************************************************************************************/
 #include "optiga/pal/pal_gpio.h"
 #include "optiga/pal/pal_i2c.h"
-#include "i2c_master_dave/i2c_master.h"
-#include "xmc_gpio.h"
-#include "xmc4_gpio.h"
+#include "I2C_MASTER/i2c_master.h"
+#include "DIGITAL_IO/digital_io.h"
 
-/**
-* @brief Initialization data structure of DIGITAL_IO APP
-*/
-typedef struct DIGITAL_IO
-{
-	uint8_t	init_flag;
-	XMC_GPIO_PORT_t *const gpio_port;             /**< port number */
-	const XMC_GPIO_CONFIG_t gpio_config;          /**< mode, initial output level and pad driver strength / hysteresis */
-	const uint8_t gpio_pin;                       /**< pin number */
-	const XMC_GPIO_HWCTRL_t hwctrl;               /**< Hardware port control */
-} DIGITAL_IO_t;
-
-const DIGITAL_IO_t pin_rst =
-{
-  .gpio_port = XMC_GPIO_PORT0,
-  .gpio_pin = 6U,
-  .gpio_config = {
-    .mode = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
-    .output_level = XMC_GPIO_OUTPUT_LEVEL_HIGH,
-
-  },
-  .hwctrl = XMC_GPIO_HWCTRL_DISABLED
-};
-
-extern I2C_MASTER_t i2c_master_0;
 /*********************************************************************************************************************
  * pal ifx i2c instance
  *********************************************************************************************************************/
@@ -100,7 +74,7 @@ pal_gpio_t optiga_vdd_0 =
 pal_gpio_t optiga_reset_0 =
 {
     // Platform specific GPIO context for the pin used to toggle Reset.
-    (void*)&pin_rst
+    (void*)NULL
 };
 
 

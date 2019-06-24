@@ -2065,6 +2065,14 @@ __STATIC_INLINE void I2C_MASTER_EnableIO(I2C_MASTER_t * const handle)
   handle->config->fptr_i2c_enable_io();
 }
 
+
+I2C_MASTER_STATUS_t I2C_MASTER_TransmitPolling(I2C_MASTER_t *const handle, bool send_start,
+                                               const uint32_t slave_address, uint8_t *data,uint32_t size,
+                                               bool send_stop);
+
+I2C_MASTER_STATUS_t I2C_MASTER_ReceivePolling(I2C_MASTER_t *const handle, bool send_start,
+                                              uint32_t slave_address, uint8_t *data, uint32_t count,
+                                              bool send_stop, bool send_nack);
 /**
  *@}
  */

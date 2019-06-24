@@ -44,6 +44,9 @@
 #include "aws_application_version.h"
 #include "aws_dev_mode_key_provisioning.h"
 
+#include "CLOCK_XMC4/clock_xmc4.h"
+#include "DIGITAL_IO/digital_io.h"
+
 
 /* Declare the firmware version structure for all to see. */
 const AppVersion32_t xAppFirmwareVersion = {
@@ -112,7 +115,14 @@ int main( void )
 
 static void prvMiscInitialization( void )
 {
+	CLOCK_XMC4_Init(&CLOCK_XMC4_0);
+
+#if defined(configPRINT_SERIALIF)
 	CONSOLE_IO_Init();
+#endif
+
+	DIGITAL_IO_Init(&LED1);
+	DIGITAL_IO_Init(&LED2);
 
 	ENTROPY_HARDWARE_Init();
 }

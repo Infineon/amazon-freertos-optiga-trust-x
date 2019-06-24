@@ -1,22 +1,19 @@
 #include "i2c_mux.h"
 
+#include "FreeRTOS.h"
+#include "semphr.h"
+
 static volatile uint32_t i2c_mutex;
+extern SemaphoreHandle_t xIicSemaphoreHandle;
 
 int32_t i2c_mux_acquire(void)
 {
-  if(i2c_mutex == 0)
-  {
-	i2c_mutex++;
-    if(i2c_mutex == 1)
-    {
-      return 0;
-    }
-  }
-  return 1;
+	if ( xSemaphoreTake(xIicSemaphoreHandle, portMAX_DELAY) == pdTRUE )
+	    return 0;
 }
 
 void i2c_mux_release(void)
 {
-  i2c_mutex = 0;
+	xSemaphoreGive(xIicSemaphoreHandle);
 }
 

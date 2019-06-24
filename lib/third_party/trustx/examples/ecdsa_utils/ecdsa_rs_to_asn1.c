@@ -38,53 +38,88 @@
 // TAG + LENGTH needs 2 bytes
 // if the highest bit of the integer is set we need an extra byte
 #define  DER_OVERHEAD ((2 + 1) * 2)
+#define RS()
+#define CRYPTO_ECDSA_SECP256R1_SIGNATURE_SIZE 64
+#define DER_INTEGER_MAX_LEN 100
+#define DER_TAG_INTEGER 0x02
 
-optiga_lib_status_t ecdsa_rs_to_asn1(const uint8_t  *r, size_t r_len,
-									 const uint8_t  *s, size_t s_len,
-									  	   uint8_t  *asn_sig, size_t *asn_sig_len)
+optiga_lib_status_t ecdsa_rs_to_asn1(uint8_t const * p_r,
+                      size_t          r_len,
+                      uint8_t const * p_s,
+                      size_t          s_len,
+                      uint8_t       * p_asn_sig,
+                      size_t        * p_asn_sig_len)
 {
-    uint32_t index;
-	optiga_lib_status_t return_status = OPTIGA_LIB_ERROR;
+    uint32_t index = 0;
+    optiga_lib_status_t return_status = OPTIGA_LIB_ERROR;
+    uint8_t r_pad = 0;
+    uint8_t s_pad = 0;
+    uint8_t* _p_r = (uint8_t  *)p_r;
+    uint8_t* _p_s = (uint8_t  *)p_s;
+    int i = 0;
 
-	do {
-		if(*asn_sig_len < (r_len + s_len + DER_OVERHEAD)) {
+    do {
+		if (_p_r == NULL || _p_s == NULL || p_asn_sig_len == NULL)
+		{
+			break;
+		}
+
+		if (r_len == 0 || r_len > DER_INTEGER_MAX_LEN || s_len == 0 || s_len > DER_INTEGER_MAX_LEN)
+		{
+			break;
+		}
+
+		if(*p_asn_sig_len < (r_len + s_len + DER_OVERHEAD)) {
 			// not enough space in output buffer
 			break;
 		}
 
-		index = 0;
-
 		// R component
-		asn_sig[index + 0] = 0x02;
-		asn_sig[index + 1] = 0x20;
-		if (r[0] & 0x80)
+		p_asn_sig[0] = 0x02;
+		i = 0;
+		while(*(_p_r + r_pad) == 0x00)
 		{
-			asn_sig[index + 1] += 1;
-			asn_sig[index + 2] =  0;
-			index++;
+			r_pad++;
 		}
-		memcpy(&asn_sig[index + 2], &r[0], r_len);
-		index += r_len + 2;
+		p_asn_sig[1] = 0x20 - r_pad;
 
-		// S component
-		asn_sig[index + 0] = 0x02;
-		asn_sig[index + 1] = 0x20;
-		if (s[0] & 0x80)
+		if (_p_r[r_pad] & 0x80)
 		{
-			asn_sig[index + 1] += 1;
-			asn_sig[index + 2] =  0;
+			p_asn_sig[1] += 1;
+			p_asn_sig[2] =  0;
 			index++;
 		}
-		memcpy(&asn_sig[index + 2], &s[0], s_len);
+		_p_r += r_pad;
+		r_len -= r_pad;
+		memcpy(p_asn_sig + index + 2, _p_r, r_len);
+
+		index += r_len + 2;
+		// S component
+		p_asn_sig[index + 0] = 0x02;
+		p_asn_sig[index + 1] = 0x20;
+
+		while(*(p_s+s_pad) == 0x00)
+		{
+			s_pad++;
+		}
+		p_asn_sig[index + 1] = 0x20 - s_pad;
+
+		if (p_s[s_pad] & 0x80)
+		{
+			p_asn_sig[index + 1] += 1;
+			p_asn_sig[index + 2] =  0;
+			index++;
+		}
+		_p_s += s_pad;
+		s_len -= s_pad;
+
+		memcpy(p_asn_sig + index + 2, _p_s, s_len);
 		index += s_len + 2;
 
-		*asn_sig_len = index; // Return total length of ASN.1-encoded data structure
-		
-		return_status = OPTIGA_LIB_SUCCESS;
-		
-	}while(FALSE);
-       
-	return return_status;
+		*p_asn_sig_len = index; // Return total length of ASN.1-encoded data structure
+    } while(0);
+
+    return return_status;
 }
 
 /**
