@@ -128,7 +128,7 @@ void OPTIGA_TRUST_X_Init(void)
 				tskIDLE_PRIORITY,/* Priority at which the task is created. */
 				NULL );      /* Used to pass out the created task's handle. */
 
-    xTrustXSemaphoreHandle = xSemaphoreCreateBinary();
+	xTrustXSemaphoreHandle = xSemaphoreCreateBinary();
 
 	xTrustXInitTimer = xTimerCreate("TrustX_init_timer",        /* Just a text name, not used by the kernel. */
 									pdMS_TO_TICKS(1),    /* The timer period in ticks. */
