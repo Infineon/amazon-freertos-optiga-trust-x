@@ -19,4 +19,4 @@ The following MCU boards are supported for Amazon FreeRTOS:
     * IDE: [STM32 System Workbench](http://openstm32.org/HomePage)
 3. **Espressif** - [ESP32-DevKitC](https://www.espressif.com/en/products/hardware/esp32-devkitc/overview), [ESP-WROVER-KIT](https://www.espressif.com/en/products/hardware/esp-wrover-kit/overview).
     * [Getting Started Guide](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html)
-    * [Getting Started Guide for Hardware Security Add-On](https://github.com/Infineon/amazon-freertos-optiga-trust-x/wiki/4.-OPTIGA%E2%84%A2-Trust-X-for-the-Espressif-ESP32-DevKitC-and-the-ESP-WROVER-KIT)
+    * [Getting Started Guide for Hardware Security Add-On](https://github.com/Infineon/amazon-freertos-optiga-trust-x/wiki/Espressif-ESP32-DevKitC-and-the-ESP-WROVER-KIT)
