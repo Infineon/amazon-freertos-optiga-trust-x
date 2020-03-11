@@ -1,3 +1,5 @@
+# We moved [here](https://github.com/Infineon/amazon-freertos-optiga-trust). There you can find both Trust M and Trust X related code. 
+
 ## Getting Started
 
 For more information on Amazon FreeRTOS, refer to the [Getting Started section of Amazon FreeRTOS webpage](https://aws.amazon.com/freertos).
